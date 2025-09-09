@@ -1,117 +1,105 @@
-import 'package:app_tareas/task_screen.dart';
-import 'package:flutter/material.dart'; // Importa las herramientas visuales de Flutter
+import 'package:app_tareas/greeting_screen.dart';
+import 'package:flutter/material.dart';
 
-// Define un widget con estado (porque hay campos que cambian, como contraseña oculta o cargando)
 class LoginFields extends StatefulWidget {
-  const LoginFields({super.key}); // Constructor del widget con clave opcional
+  const LoginFields({super.key});
 
   @override
-  State<LoginFields> createState() => _LoginFieldsState(); // Crea el estado del widget
+  State<LoginFields> createState() => _LoginFieldsState();
 }
 
 class _LoginFieldsState extends State<LoginFields> {
-  final _formKey =
-      GlobalKey<FormState>(); // Llave para manejar el formulario y validaciones
-  final _emailCtrl =
-      TextEditingController(); // Controlador para el campo de email
-  final _passCtrl =
-      TextEditingController(); // Controlador para el campo de contraseña
+  final _formKey = GlobalKey<FormState>();
+  final _emailCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
 
-  bool _obscure = true; // Para ocultar o mostrar la contraseña
-  bool _loading =
-      false; // Para indicar si está cargando (ej. al enviar el formulario)
-  String? _error; // Para guardar y mostrar un posible mensaje de error
+  bool _obscure = true;
+  bool _loading = false;
+  String? _error;
 
   @override
   void dispose() {
-    // Libera los recursos de los controladores cuando el widget se destruye
     _emailCtrl.dispose();
     _passCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
-    // Lógica para enviar el formulario
-    FocusScope.of(context).unfocus(); // Oculta el teclado
-    final ok = _formKey.currentState?.validate() ?? false; // Valida los campos
-    if (!ok)return; //Si no es válido no continua
+    FocusScope.of(context).unfocus();
+    final ok = _formKey.currentState?.validate() ?? false;
+    if (!ok) return;
 
     setState(() {
-      _loading =true;
-      _error =null;
+      _loading = true;
+      _error = null;
     });
 
     try {
-      await Future.delayed(const Duration(milliseconds: 8000)); // Simula una llamada de red (auth).
+      // Simula llamada de autenticación breve
+      await Future.delayed(const Duration(milliseconds: 1200));
 
-      if (!mounted) return;                                    // Seguridad: evita usar context si el widget se removió.
-      Navigator.of(context).pushReplacement(                   // Reemplaza la pantalla actual por la de Tareas.
-        MaterialPageRoute(builder: (_) => const TaskScreen()),// Define la ruta a TasksScreen.
+      if (!mounted) return;
+
+      final email = _emailCtrl.text.trim();
+
+      // Navega reemplazando la pantalla actual y pasando el correo 
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => GreetingScreen(userEmail: email),
+        ),
       );
-    } catch (e) {                                              // Si algo falla (ej. credenciales/red) entra aquí.
-      if (!mounted) return;                                    // Evita setState si el widget ya no existe.
-      setState(() => _error = 'Credenciales inválidas o error de red'); // Guarda un mensaje de error global.
-      ScaffoldMessenger.of(context).showSnackBar(              // Muestra un SnackBar con feedback al usuario.
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = 'Credenciales inválidas o error de red');
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No pudimos iniciar sesión')),
       );
-    } finally {                                                // Se ejecuta siempre (haya éxito o error).
-      if (mounted) setState(() => _loading = false);           // Apaga el modo cargando y re-habilita la UI.
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
-  }  
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Construye la parte visual del widget
     return AutofillGroup(
-      // Agrupa campos que permiten autocompletar
       child: Form(
-        key: _formKey, // Usa la llave definida antes para validar
-        autovalidateMode: AutovalidateMode
-            .onUserInteraction, // Valida automáticamente mientras el usuario escribe
+        key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: Column(
-          // Organiza los widgets en una columna
-          crossAxisAlignment:
-              CrossAxisAlignment.stretch, // Estira el contenido horizontalmente
-          mainAxisSize: MainAxisSize.min, // Ocupa el mínimo espacio necesario
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Center(
-              // Centra la imagen
               child: Image.network(
-                "https://i.ibb.co/gbM1xQbB/logo-inacap.jpg", // Logo de Inacap
+                "https://i.ibb.co/gbM1xQbB/logo-inacap.jpg",
                 height: 100,
-                fit: BoxFit.contain, // Ajusta la imagen sin recortarla
+                fit: BoxFit.contain,
               ),
             ),
-            const SizedBox(height: 16), // Espacio vertical
+            const SizedBox(height: 16),
 
             const Text(
-              "Bienvenido Inacapino", // Mensaje de bienvenida
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-              ), // Estilo del texto
-              textAlign: TextAlign.center, // Centra el texto
+              "Bienvenido Inacapino",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
             ),
 
+            const SizedBox(height: 12),
+
+            // Email
             TextFormField(
-              // Campo de texto para el email
-              enabled:
-                  !_loading, // Está deshabilitado si _loading es falso (esto parece un error lógico, debería ser !loading)
-              controller: _emailCtrl, // Controlador del campo
-              keyboardType: TextInputType
-                  .emailAddress, // Tipo de teclado: correo electrónico
-              textCapitalization:
-                  TextCapitalization.none, // No capitaliza automáticamente
-              autocorrect: false, // No corrige automáticamente
-              enableSuggestions: true, // Permite sugerencias del teclado
-              autofillHints: const [
-                AutofillHints.email,
-              ], // Sugerencia para autocompletar email
+              enabled: !_loading, // Deshabilita mientras está cargando
+              controller: _emailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              textCapitalization: TextCapitalization.none,
+              autocorrect: false,
+              enableSuggestions: true,
+              autofillHints: const [AutofillHints.email],
               decoration: const InputDecoration(
-                labelText: "Email", // Etiqueta del campo
-                hintText: "ejemplo@ejemplo.com", // Texto de ayuda
-                prefixIcon: Icon(Icons.email_outlined), // Ícono al inicio
-                border: OutlineInputBorder(), // Borde alrededor del campo
+                labelText: "Email",
+                hintText: "ejemplo@ejemplo.com",
+                prefixIcon: Icon(Icons.email_outlined),
+                border: OutlineInputBorder(),
               ),
               validator: (v) {
                 final value = v?.trim() ?? '';
@@ -122,8 +110,10 @@ class _LoginFieldsState extends State<LoginFields> {
               textInputAction: TextInputAction.next,
               onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
             ),
+
             const SizedBox(height: 12),
 
+            // Contraseña
             TextFormField(
               enabled: !_loading,
               controller: _passCtrl,
@@ -137,20 +127,19 @@ class _LoginFieldsState extends State<LoginFields> {
                 prefixIcon: const Icon(Icons.lock_outline),
                 suffixIcon: IconButton(
                   onPressed: () => setState(() => _obscure = !_obscure),
-                  icon: Icon(
-                    _obscure ? Icons.visibility : Icons.visibility_off,
-                  ),
+                  icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
                   tooltip: _obscure ? "Mostrar" : "Ocultar",
                 ),
               ),
               validator: (v) {
                 if (v == null || v.isEmpty) return "Ingrese la contraseña";
                 if (v.length < 6) return "Mínimo 6 caracteres";
-                return null; //valida
+                return null;
               },
               textInputAction: TextInputAction.done,
               onFieldSubmitted: (_) => _submit(),
             ),
+
             const SizedBox(height: 8),
 
             if (_error != null)
@@ -159,33 +148,38 @@ class _LoginFieldsState extends State<LoginFields> {
                 style: const TextStyle(color: Colors.red),
                 textAlign: TextAlign.center,
               ),
+
             const SizedBox(height: 16),
-            //--------------------Boton------------------------------------
+
+            // Botón Ingresar
             SizedBox(
               height: 48,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
-                  foregroundColor: Colors.white
+                  foregroundColor: Colors.white,
                 ),
-                onPressed: _loading?null:_submit,
+                onPressed: _loading ? null : _submit,
                 child: _loading
-                ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                ) :const Text("Ingresar"),               
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text("Ingresar"),
               ),
             ),
-             const SizedBox(height: 8),
 
-             TextButton(
-              onPressed: _loading?null:(){},
+            const SizedBox(height: 8),
+
+            // Olvidé contraseña (placeholder)
+            TextButton(
+              onPressed: _loading ? null : () {},
               child: const Text("¿Olvidaste tu contraseña?"),
-             )
+            ),
           ],
         ),
       ),
